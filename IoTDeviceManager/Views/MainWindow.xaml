@@ -8,10 +8,22 @@
         xmlns:viewmodels="clr-namespace:IoTDeviceManager.ViewModels"
         mc:Ignorable="d"
         Title="IoT Device Manager" Height="450" Width="800">
-    <mah:MetroWindow.DataContext>
+    <Window.DataContext>
         <viewmodels:MainWindowViewModel />
-    </mah:MetroWindow.DataContext>
+    </Window.DataContext>
     <Grid>
-
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*" MinWidth="100" />
+            <ColumnDefinition Width="5" />
+            <ColumnDefinition Width="3*" />
+        </Grid.ColumnDefinitions>
+        <ListView ItemsSource="{Binding Devices}">
+            <ListView.ItemTemplate>
+                <DataTemplate>
+                    <Label Content="{Binding DeviceName}" />
+                </DataTemplate>
+            </ListView.ItemTemplate>
+        </ListView>
+        <GridSplitter Grid.Column="1" Width="5" />
     </Grid>
 </mah:MetroWindow>
