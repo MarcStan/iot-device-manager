@@ -1,114 +1,60 @@
-﻿using IoTDeviceManager.Framework;
-using IoTDeviceManager.Models;
-using Microsoft.Azure.Devices;
-using Microsoft.Azure.Devices.Shared;
-using Microsoft.Extensions.Configuration;
-using System;
+﻿using IoTDeviceManager.Models;
+using IoTDeviceManager.ViewModels.Controls;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Linq;
-using System.Threading.Tasks;
-using System.Windows.Input;
 
 namespace IoTDeviceManager.ViewModels
 {
     public class MainWindowViewModel : ViewModelBase
     {
-        private ObservableCollection<DeviceModel> _devices;
-        private readonly RegistryManager _registryManager;
-        private string? _deviceQuery;
-        private string? _previousDeviceQuery;
-        private bool _isQueryRunning;
+        private FilteredDeviceListViewModel _filteredDeviceListViewModel;
+        private QueryInputViewModel _queryInputViewModel;
+        private string? _error;
 
         public MainWindowViewModel(
-            IConfiguration configuration)
+            QueryInputViewModel queryInputViewModel,
+            FilteredDeviceListViewModel filteredDeviceListViewModel)
         {
-            const string key = "ConnectionStrings:IoTHub";
-            var connectionString = configuration[key];
-            if (string.IsNullOrEmpty(connectionString))
-                throw new ArgumentException($"Missing required connectionstring @{key}");
+            _queryInputViewModel = queryInputViewModel;
+            _filteredDeviceListViewModel = filteredDeviceListViewModel;
 
-            _registryManager = RegistryManager.CreateFromConnectionString(connectionString);
-            _devices = new ObservableCollection<DeviceModel>();
-
-            ExecuteDeviceQueryCommand = new RelayCommand(async () => await QueryDevicesAsync());
-            ClearQueryCommand = new RelayCommand(() => DeviceQuery = null);
+            queryInputViewModel.QueryResultUpdated += OnQueryUpdated;
+            // initial query
+            queryInputViewModel.ExecuteDeviceQueryCommand.Execute(null);
+            queryInputViewModel.QueryError += OnQueryError;
         }
 
-        public ICommand ExecuteDeviceQueryCommand { get; }
-
-        public ICommand ClearQueryCommand { get; }
-
-        public string? DeviceQuery
+        public QueryInputViewModel QueryInputViewModel
         {
-            get => _deviceQuery;
+            get => _queryInputViewModel;
+            set { SetProperty(ref _queryInputViewModel, value); }
+        }
+
+        public FilteredDeviceListViewModel FilteredDeviceListViewModel
+        {
+            get => _filteredDeviceListViewModel;
+            set { SetProperty(ref _filteredDeviceListViewModel, value); }
+        }
+
+        public string? Error
+        {
+            get => _error;
             set
             {
-                if (SetProperty(ref _deviceQuery, value))
-                {
-                    OnPropertyChanged(nameof(HasDeviceQuery));
-                    ExecuteDeviceQueryCommand.Execute(null);
-                }
+                if (SetProperty(ref _error, value) && !string.IsNullOrEmpty(Error))
+                    OnPropertyChanged(nameof(HasError));
             }
         }
 
-        public string DeviceFilterHeader
-            => _devices.Count != 1 ?
-                $"Filtered devices ({_devices.Count} results)" :
-                $"Filtered devices ({_devices.Count} result)";
+        public bool HasError => !string.IsNullOrEmpty(Error);
 
-        public bool IsQueryRunning
+        private void OnQueryUpdated(QueryInputViewModel sender, IReadOnlyList<DeviceModel> args)
         {
-            get => _isQueryRunning;
-            set { SetProperty(ref _isQueryRunning, value); }
+            Error = null;
         }
 
-        public bool HasDeviceQuery => !string.IsNullOrEmpty(DeviceQuery);
-
-        public ObservableCollection<DeviceModel> Devices
+        private void OnQueryError(QueryInputViewModel sender, string errorMessage)
         {
-            get => _devices;
-            set
-            {
-                if (SetProperty(ref _devices, value))
-                    OnPropertyChanged(nameof(DeviceFilterHeader));
-            }
-        }
-
-        public async Task QueryDevicesAsync()
-        {
-            var queryString = DeviceQuery ?? "";
-            if (queryString == _previousDeviceQuery)
-                return;
-
-            _previousDeviceQuery = queryString;
-            queryString = "SELECT * FROM devices" + (string.IsNullOrEmpty(queryString) ? "" : $" {queryString}");
-            try
-            {
-                IsQueryRunning = true;
-                var query = _registryManager.CreateQuery(queryString);
-                var twins = new List<Twin>();
-                while (query.HasMoreResults)
-                {
-                    var results = await query.GetNextAsTwinAsync();
-                    twins.AddRange(results);
-                }
-                Devices = new ObservableCollection<DeviceModel>(twins.Select(t =>
-                {
-                    return new DeviceModel
-                    {
-                        DeviceName = t.DeviceId
-                    };
-                }));
-            }
-            catch (Exception)
-            {
-                //throw;
-            }
-            finally
-            {
-                IsQueryRunning = false;
-            }
+            Error = "Query error: " + errorMessage;
         }
     }
 }

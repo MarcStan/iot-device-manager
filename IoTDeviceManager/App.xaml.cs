@@ -1,4 +1,5 @@
-﻿using IoTDeviceManager.Framework;
+﻿using IoTDeviceManager.Config;
+using IoTDeviceManager.Framework;
 using IoTDeviceManager.ViewModels;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -21,7 +22,7 @@ namespace IoTDeviceManager
                     if (context.HostingEnvironment.IsDevelopment())
                         builder.AddUserSecrets<App>();
                 })
-                .ConfigureServices((_, services) =>
+                .ConfigureServices((context, services) =>
                 {
                     services.Scan(scan =>
                     {
@@ -29,15 +30,20 @@ namespace IoTDeviceManager
                             // views
                             .AddClasses(x => x.AssignableTo<Window>())
                             .AsSelf()
-                            .WithTransientLifetime()
+                            .WithScopedLifetime()
                             // viewmodels
                             .AddClasses(x => x.AssignableTo<ViewModelBase>())
                             .AsSelf()
-                            .WithTransientLifetime()
+                            .WithScopedLifetime()
                             .AddClasses()
                             .AsMatchingInterface()
+                            .WithTransientLifetime()
+                            .AddClasses(x => x.InNamespaceOf<ConnectionStrings>())
+                            .AsSelf()
                             .WithTransientLifetime();
                     });
+                    var config = services.BuildServiceProvider().GetRequiredService<IConfiguration>();
+                    services.Configure<ConnectionStrings>(config.GetSection("ConnectionStrings"));
                 });
 
             _host = hostBuilder.Build();
@@ -52,7 +58,10 @@ namespace IoTDeviceManager
         {
             base.OnStartup(e);
 
-            var navigator = _host.Services.GetRequiredService<INavigator>();
+            // this causes the application to have a single global scope
+            // good enough for the demo
+            using var scoped = _host.Services.CreateScope();
+            var navigator = scoped.ServiceProvider.GetRequiredService<INavigator>();
             await navigator.ShowAsync<MainWindowViewModel>();
         }
 
