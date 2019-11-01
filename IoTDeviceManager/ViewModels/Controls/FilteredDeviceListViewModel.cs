@@ -1,6 +1,7 @@
 ﻿using IoTDeviceManager.Models;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Linq;
 
 namespace IoTDeviceManager.ViewModels.Controls
 {
@@ -33,7 +34,7 @@ namespace IoTDeviceManager.ViewModels.Controls
 
         private void OnQueryUpdated(QueryInputViewModel sender, IReadOnlyList<DeviceModel> queryResult)
         {
-            Devices = new ObservableCollection<DeviceModel>(queryResult);
+            Devices = new ObservableCollection<DeviceModel>(queryResult.OrderBy(x => x.DeviceName));
         }
     }
 }
