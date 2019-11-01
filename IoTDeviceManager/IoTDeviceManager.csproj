@@ -6,12 +6,23 @@
     <UseWPF>true</UseWPF>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <Nullable>enable</Nullable>
+    <UserSecretsId>117dc8c0-4dff-4e5d-81ae-ea1e972a790b</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="MahApps.Metro" Version="2.0.0-alpha0531" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.UserSecrets" Version="3.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="3.0.0" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="3.0.0" />
     <PackageReference Include="Scrutor" Version="3.1.0" />
+    <PackageReference Include="Microsoft.Azure.Devices" Version="1.18.1" />
+    <PackageReference Include="Microsoft.Azure.Devices.Client" Version="1.21.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="appsettings.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
 </Project>

@@ -1,4 +1,4 @@
-﻿namespace IoTDeviceManager
+﻿namespace IoTDeviceManager.Views
 {
     public partial class MainWindow
     {

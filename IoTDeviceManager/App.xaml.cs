@@ -1,40 +1,65 @@
-﻿using IoTDeviceManager.ViewModels;
+﻿using IoTDeviceManager.Framework;
+using IoTDeviceManager.ViewModels;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using System;
+using Microsoft.Extensions.Hosting;
 using System.Windows;
 
 namespace IoTDeviceManager
 {
     public partial class App
     {
-        private readonly IServiceProvider _serviceProvider;
+        private readonly IHost _host;
+
         public App()
         {
-            var services = new ServiceCollection();
-            ConfigureServices(services);
-            _serviceProvider = services.BuildServiceProvider();
+            var hostBuilder = Host.CreateDefaultBuilder()
+                // always use development as this is a sample client
+                .UseEnvironment("Development")
+                .ConfigureAppConfiguration((context, builder) =>
+                {
+                    if (context.HostingEnvironment.IsDevelopment())
+                        builder.AddUserSecrets<App>();
+                })
+                .ConfigureServices((_, services) =>
+                {
+                    services.Scan(scan =>
+                    {
+                        scan.FromAssemblyOf<App>()
+                            // views
+                            .AddClasses(x => x.AssignableTo<Window>())
+                            .AsSelf()
+                            .WithTransientLifetime()
+                            // viewmodels
+                            .AddClasses(x => x.AssignableTo<ViewModelBase>())
+                            .AsSelf()
+                            .WithTransientLifetime()
+                            .AddClasses()
+                            .AsMatchingInterface()
+                            .WithTransientLifetime();
+                    });
+                });
+
+            _host = hostBuilder.Build();
         }
 
-        private void ConfigureServices(ServiceCollection services)
+        private async void Application_Startup(object sender, StartupEventArgs e)
         {
-            services.Scan(scan =>
-            {
-                scan.FromAssemblyOf<App>()
-                    // views
-                    .AddClasses(x => x.AssignableTo<Window>())
-                    .AsSelf()
-                    .WithTransientLifetime()
-                    // viewmodels
-                    .AddClasses(x => x.AssignableTo<ViewModelBase>())
-                    .AsSelf()
-                    .WithTransientLifetime();
-            });
+            await _host.StartAsync();
         }
 
-        protected override void OnStartup(StartupEventArgs e)
+        protected override async void OnStartup(StartupEventArgs e)
         {
-            var window = _serviceProvider.GetRequiredService<MainWindow>();
-            window.Show();
+            base.OnStartup(e);
+
+            var navigator = _host.Services.GetRequiredService<INavigator>();
+            await navigator.ShowAsync<MainWindowViewModel>();
+        }
+
+        private async void Application_Exit(object sender, ExitEventArgs e)
+        {
+            using (_host)
+                await _host.StopAsync();
         }
     }
 }

@@ -5,14 +5,15 @@ namespace IoTDeviceManager.ViewModels
 {
     public abstract class ViewModelBase : INotifyPropertyChanged
     {
-        protected void SetProperty<T>(ref T backingField, T value, [CallerMemberName] string? propertyName = null)
+        protected bool SetProperty<T>(ref T backingField, T value, [CallerMemberName] string? propertyName = null)
         {
             if ((backingField == null && value == null) ||
                 (backingField != null && backingField.Equals(value)))
-                return;
+                return false;
 
             backingField = value;
             OnPropertyChanged(propertyName);
+            return true;
         }
 
         protected void OnPropertyChanged([CallerMemberName] string? propertyName = null)

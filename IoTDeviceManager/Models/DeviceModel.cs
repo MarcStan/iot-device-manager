@@ -1,6 +1,6 @@
 ﻿namespace IoTDeviceManager.Models
 {
-    public class Device
+    public class DeviceModel
     {
         public string DeviceName { get; set; } = "<unknown>";
     }
