@@ -6,7 +6,8 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:controls="clr-namespace:IoTDeviceManager.Controls"
-        mc:Ignorable="d"
+    xmlns:tabs="clr-namespace:IoTDeviceManager.Views.Tabs"
+    mc:Ignorable="d"
         Title="IoT Device Manager" Height="450" Width="800">
     <Grid>
         <Grid.RowDefinitions>
@@ -28,14 +29,14 @@
         <GridSplitter Grid.Column="1" Width="5" Grid.Row="1" />
         <TabControl Grid.Column="2" Grid.Row="1">
             <TabItem Header="Bulk update">
-                
+                <tabs:BulkUpdateTab DataContext="{Binding BulkUpdateViewModel}" />
             </TabItem>
             <TabItem Header="Schedule jobs">
-                
+                <tabs:ScheduleJobsTab DataContext="{Binding ScheduleJobsViewModel}" />
             </TabItem>
         </TabControl>
-        <Grid Grid.Row="2" Grid.ColumnSpan="3" Background="LightGray" Visibility="{Binding HasError, Converter={StaticResource BoolToVisibilityConverter}}">
-            <Label Content="{Binding Error}" Foreground="DarkRed" />
+        <Grid Grid.Row="2" Grid.ColumnSpan="3" Background="LightGray" Visibility="{Binding HasError, Converter={StaticResource BooleanToVisibilityConverter}}">
+            <TextBox IsReadOnly="True" TextWrapping="Wrap" Text="{Binding Error}" Foreground="DarkRed" Style="{StaticResource BorderlessTextBoxStyle}" />
         </Grid>
     </Grid>
 </mah:MetroWindow>

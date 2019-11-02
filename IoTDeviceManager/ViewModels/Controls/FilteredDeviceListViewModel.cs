@@ -22,6 +22,11 @@ namespace IoTDeviceManager.ViewModels.Controls
                 $"Filtered devices ({_devices.Count} results)" :
                 $"Filtered devices ({_devices.Count} result)";
 
+        /// <summary>
+        /// The last query that resulted in the filtered list of <see cref="Devices"/> (does not include he "SELECT * FROM devices" prefix).
+        /// </summary>
+        public string? ExecutedQuery { get; private set; }
+
         public ObservableCollection<DeviceModel> Devices
         {
             get => _devices;
@@ -34,6 +39,7 @@ namespace IoTDeviceManager.ViewModels.Controls
 
         private void OnQueryUpdated(QueryInputViewModel sender, IReadOnlyList<DeviceModel> queryResult)
         {
+            ExecutedQuery = sender.DeviceQuery;
             Devices = new ObservableCollection<DeviceModel>(queryResult.OrderBy(x => x.DeviceName));
         }
     }

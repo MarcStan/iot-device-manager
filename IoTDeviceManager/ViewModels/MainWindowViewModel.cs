@@ -1,5 +1,6 @@
 ﻿using IoTDeviceManager.Models;
 using IoTDeviceManager.ViewModels.Controls;
+using IoTDeviceManager.ViewModels.Tabs;
 using System.Collections.Generic;
 
 namespace IoTDeviceManager.ViewModels
@@ -8,14 +9,20 @@ namespace IoTDeviceManager.ViewModels
     {
         private FilteredDeviceListViewModel _filteredDeviceListViewModel;
         private QueryInputViewModel _queryInputViewModel;
+        private BulkUpdateViewModel _bulkUpdateViewModel;
+        private ScheduleJobsViewModel _scheduleJobsViewModel;
         private string? _error;
 
         public MainWindowViewModel(
             QueryInputViewModel queryInputViewModel,
-            FilteredDeviceListViewModel filteredDeviceListViewModel)
+            FilteredDeviceListViewModel filteredDeviceListViewModel,
+            BulkUpdateViewModel bulkUpdateViewModel,
+            ScheduleJobsViewModel scheduleJobsViewModel)
         {
             _queryInputViewModel = queryInputViewModel;
             _filteredDeviceListViewModel = filteredDeviceListViewModel;
+            _bulkUpdateViewModel = bulkUpdateViewModel;
+            _scheduleJobsViewModel = scheduleJobsViewModel;
 
             queryInputViewModel.QueryResultUpdated += OnQueryUpdated;
             // initial query
@@ -33,6 +40,18 @@ namespace IoTDeviceManager.ViewModels
         {
             get => _filteredDeviceListViewModel;
             set { SetProperty(ref _filteredDeviceListViewModel, value); }
+        }
+
+        public BulkUpdateViewModel BulkUpdateViewModel
+        {
+            get => _bulkUpdateViewModel;
+            set { SetProperty(ref _bulkUpdateViewModel, value); }
+        }
+
+        public ScheduleJobsViewModel ScheduleJobsViewModel
+        {
+            get => _scheduleJobsViewModel;
+            set { SetProperty(ref _scheduleJobsViewModel, value); }
         }
 
         public string? Error

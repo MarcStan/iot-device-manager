@@ -11,7 +11,8 @@
                 <ResourceDictionary Source="pack://application:,,,/MahApps.Metro;component/Styles/Fonts.xaml" />
                 <ResourceDictionary Source="pack://application:,,,/MahApps.Metro;component/Styles/Themes/Light.Blue.xaml" />
             </ResourceDictionary.MergedDictionaries>
-            <converters:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter" />
+            <converters:InvertBooleanConverter x:Key="InvertBooleanConverter" />
+            <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
             <Style x:Key="TransparentButtonStyle" TargetType="{x:Type Button}">
                 <Setter Property="Template">
                     <Setter.Value>
@@ -22,6 +23,9 @@
                         </ControlTemplate>
                     </Setter.Value>
                 </Setter>
+            </Style>
+            <Style x:Key="BorderlessTextBoxStyle" TargetType="{x:Type TextBox}">
+                <Setter Property="BorderThickness" Value="0" />
             </Style>
         </ResourceDictionary>
     </Application.Resources>

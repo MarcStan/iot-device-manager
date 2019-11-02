@@ -1,16 +1,15 @@
 ﻿using System;
 using System.Globalization;
-using System.Windows;
 using System.Windows.Data;
 
 namespace IoTDeviceManager.Converters
 {
-    public class BoolToVisibilityConverter : IValueConverter
+    public class InvertBooleanConverter : IValueConverter
     {
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
             if (value is bool b)
-                return b ? Visibility.Visible : Visibility.Hidden;
+                return !b;
 
             throw new NotImplementedException();
         }

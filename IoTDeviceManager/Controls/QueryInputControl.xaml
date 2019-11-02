@@ -39,10 +39,10 @@
                     HorizontalAlignment="Right"
                     Foreground="DarkGray"
                     Command="{Binding ClearQueryCommand}"
-                    Visibility="{Binding HasDeviceQuery, Converter={StaticResource BoolToVisibilityConverter}}" />
+                    Visibility="{Binding HasDeviceQuery, Converter={StaticResource BooleanToVisibilityConverter}}" />
         <mah:ProgressRing Grid.Row="1" Grid.Column="1"
                           HorizontalAlignment="Right"
                           Width="23" Height="23"
-                          Visibility="{Binding IsQueryRunning, Converter={StaticResource BoolToVisibilityConverter}}" />
+                          Visibility="{Binding IsQueryRunning, Converter={StaticResource BooleanToVisibilityConverter}}" />
     </Grid>
 </UserControl>
