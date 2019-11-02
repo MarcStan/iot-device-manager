@@ -19,7 +19,7 @@ namespace IoTClient.Cli
                 })
                 .ConfigureServices((_, services) =>
                 {
-                    services.AddHostedService<SimulatedDeviceToCloudWorker>();
+                    services.AddHostedService<SimulateManyDevicesToCloudWorker>();
                 });
 
             using var host = hostBuilder.Build();
