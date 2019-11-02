@@ -4,9 +4,9 @@ using IoTDeviceManager.ViewModels.Controls;
 using Microsoft.Azure.Devices;
 using Microsoft.Azure.Devices.Shared;
 using Microsoft.Extensions.Options;
-using Newtonsoft.Json;
 using System;
 using System.Linq;
+using System.Text.Json;
 using System.Threading.Tasks;
 using System.Windows.Input;
 
@@ -52,7 +52,7 @@ namespace IoTDeviceManager.ViewModels.Tabs
                 if (!int.TryParse(OverheatThreshold, out int threshold))
                     throw new ArgumentException("Threshold is not a valid integer!");
 
-                var desiredProperties = JsonConvert.SerializeObject(new
+                var desiredProperties = JsonSerializer.Serialize(new
                 {
                     overheatThreshold = threshold
                 });

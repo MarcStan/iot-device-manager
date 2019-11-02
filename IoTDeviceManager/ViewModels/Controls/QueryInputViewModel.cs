@@ -39,6 +39,11 @@ namespace IoTDeviceManager.ViewModels.Controls
 
         public ICommand ClearQueryCommand { get; }
 
+        public string QueryPrefix => "SELECT * FROM devices";
+
+        /// <summary>
+        /// The user provided query without the query prefix.
+        /// </summary>
         public string? DeviceQuery
         {
             get => _deviceQuery;
@@ -74,7 +79,7 @@ namespace IoTDeviceManager.ViewModels.Controls
             }
 
             _previousDeviceQuery = queryString;
-            queryString = "SELECT * FROM devices" + (string.IsNullOrEmpty(queryString) ? "" : $" {queryString}");
+            queryString = QueryPrefix + (string.IsNullOrEmpty(queryString) ? "" : $" {queryString}");
             try
             {
                 IsQueryRunning = true;

@@ -5,10 +5,10 @@ using IoTDeviceManager.ViewModels.Controls;
 using Microsoft.Azure.Devices;
 using Microsoft.Azure.Devices.Shared;
 using Microsoft.Extensions.Options;
-using Newtonsoft.Json;
 using System;
 using System.Collections.ObjectModel;
 using System.Linq;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
@@ -25,7 +25,7 @@ namespace IoTDeviceManager.ViewModels.Tabs
         private ObservableCollection<string> _updateTimes;
         private ScheduledJob? _scheduledJob;
         private Timer _timer;
-        private string _jobStatus = "";
+        private string _jobStatusMessage = "";
 
         public ScheduleJobsViewModel(
             IOptions<ConnectionStrings> connectionStrings,
@@ -36,22 +36,23 @@ namespace IoTDeviceManager.ViewModels.Tabs
             _targetVersion = "1.1";
             _updateTimes = new ObservableCollection<string>(new[]
             {
+                "immediately",
                 "5 seconds from now",
                 "10 seconds from now",
                 "30 seconds from now",
                 "1 minute from now"
             });
-            _selectedupdateTime = _updateTimes.First();
+            _selectedupdateTime = _updateTimes[1];
             UpdateFirmwareCommand = new RelayCommand(async () => await UpdateFirmwareAsync());
             _timer = new Timer(OnTick, null, Timeout.Infinite, 1000);
         }
 
         public ICommand UpdateFirmwareCommand { get; }
 
-        public string JobStatus
+        public string JobStatusMessage
         {
-            get => _jobStatus;
-            set { SetProperty(ref _jobStatus, value); }
+            get => _jobStatusMessage;
+            set { SetProperty(ref _jobStatusMessage, value); }
         }
 
         public ScheduledJob? ScheduledJob
@@ -111,7 +112,7 @@ namespace IoTDeviceManager.ViewModels.Tabs
 
                 if (twinsToUpdate.Count == 0)
                 {
-                    JobStatus = "No devices would be affected by this job!";
+                    JobStatusMessage = "No devices would be affected by this job!";
                     return;
                 }
 
@@ -122,39 +123,63 @@ namespace IoTDeviceManager.ViewModels.Tabs
                 {
                     return;
                 }
-                // must use * for all devices instead of empty query
                 if (string.IsNullOrWhiteSpace(query))
+                {
+                    // must use * for all devices instead of empty query
                     query = "*";
+                }
+                else if (query.StartsWith("where", StringComparison.OrdinalIgnoreCase))
+                {
+                    // job system does not like where as part of the query
+                    query = query.Substring("where".Length).TrimStart();
+                }
 
                 var uid = Guid.NewGuid().ToString().Substring(0, 5);
                 var jobId = $"firmware-update-{uid}";
 
-                var desiredDelayInSeconds = GetFromUserSelection(SelectedUpdateTime);
+                var desiredDelayInSeconds = GetDelayInSecondsFromUserSelection(SelectedUpdateTime);
                 var scheduledTime = DateTime.UtcNow.AddSeconds(desiredDelayInSeconds);
-                const int ttl = 120;
+                // execution limit of job itself
+                // if a device is not online within that window it will simply not be called
+                const int jobTtlInSeconds = 120;
                 var firmwareUpdateMethod = new CloudToDeviceMethod("UpdateFirmwareNow")
-                    .SetPayloadJson(JsonConvert.SerializeObject(new
+                    .SetPayloadJson(JsonSerializer.Serialize(new
                     {
                         targetVersion = TargetVersion
                     }));
                 ScheduledJob = new ScheduledJob(jobId, scheduledTime, _filteredDeviceListViewModel.Devices.Count);
                 _timer.Change(0, 1000);
-                OnPropertyChanged(nameof(CanForceUpdate));
-                OnPropertyChanged(nameof(IsJobRunning));
-                await _jobClient.ScheduleDeviceMethodAsync(jobId, query, firmwareUpdateMethod, scheduledTime, ttl);
+                var response = await _jobClient.ScheduleDeviceMethodAsync(jobId, query, firmwareUpdateMethod, scheduledTime, jobTtlInSeconds);
+                await WaitForJobCompletionAsync(response.JobId);
+                ScheduledJob = null;
+                JobStatusMessage = "Job has executed. Check individual devices now!";
             }
             catch (Exception e)
             {
                 ScheduledJob = null;
                 _timer.Change(Timeout.Infinite, 1000);
-                JobStatus = e.Message;
+                JobStatusMessage = e.Message;
             }
         }
 
-        private int GetFromUserSelection(string selected)
+        private async Task WaitForJobCompletionAsync(string jobId)
         {
+            JobResponse result;
+            do
+            {
+                await Task.Delay(1000);
+                result = await _jobClient.GetJobAsync(jobId);
+            } while (result.Status != JobStatus.Completed && result.Status != JobStatus.Failed);
+        }
+
+        private int GetDelayInSecondsFromUserSelection(string selected)
+        {
+            if (selected.StartsWith("immediate"))
+                return 0;
+
             // assume value + time in format "60 seconds", "1 minute", ..
             // -> can parse number and use first letter as multiplier.. good enough
+
             var separatorIndex = selected.IndexOf(' ');
             var time = selected.Substring(0, separatorIndex);
             return int.Parse(time) * (selected[separatorIndex + 1] == 'm' ? 60 : 1);
@@ -164,23 +189,19 @@ namespace IoTDeviceManager.ViewModels.Tabs
         {
             var job = ScheduledJob;
             if (job == null)
-            {
-                JobStatus = "Job has executed. Check individual devices now!";
-                _timer.Change(Timeout.Infinite, 1000);
                 return;
-            }
 
             var delta = (job.ScheduledTime - DateTime.UtcNow).Seconds;
             if (delta <= 0)
             {
-                JobStatus = "Executing job..";
+                JobStatusMessage = "Executing job..";
                 // run one more time with delay to set fake "completed" message above
                 ScheduledJob = null;
-                _timer.Change(2000, 1000);
+                _timer.Change(Timeout.Infinite, 1000);
                 return;
             }
 
-            JobStatus = $"Job {job.JobId} is scheduled to run in {delta} seconds and should affect {job.AffectedDeviceCount} devices..";
+            JobStatusMessage = $"Job {job.JobId} is scheduled to run in {delta} seconds and should affect {job.AffectedDeviceCount} devices..";
         }
     }
 }

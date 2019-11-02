@@ -3,6 +3,7 @@ using Microsoft.Azure.Devices.Shared;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using System;
+using System.Collections.Generic;
 using System.Text;
 using System.Text.Json;
 using System.Threading;
@@ -13,6 +14,7 @@ namespace IoTClient.Cli
     public partial class SimulateManyDevicesToCloudWorker : IHostedService
     {
         private readonly ConnectionStrings _connectionStrings;
+        private readonly List<Task> _backgroundWorkers = new List<Task>();
         private bool _sendData;
 
         public SimulateManyDevicesToCloudWorker(
@@ -28,66 +30,131 @@ namespace IoTClient.Cli
         {
             Console.WriteLine("Beginning device simulation..");
             _sendData = true;
-            foreach (var c in _connectionStrings.DeviceConnections)
-                _ = SimulateAsync(c);
+            for (int i = 0; i < _connectionStrings.DeviceConnections.Length; i++)
+            {
+                Console.WriteLine($"Preparing client {i + 1}/{_connectionStrings.DeviceConnections.Length}");
+                var instance = new DeviceInstance(_connectionStrings.DeviceConnections[i]);
+                _backgroundWorkers.Add(SimulateAsync(instance));
+            }
 
             return Task.CompletedTask;
         }
 
-        public Task StopAsync(CancellationToken cancellationToken)
+        public async Task StopAsync(CancellationToken cancellationToken)
         {
             _sendData = false;
             Console.WriteLine("Stopping device simulation..");
-            return Task.CompletedTask;
+            try
+            {
+                await Task.WhenAll(_backgroundWorkers);
+            }
+            catch
+            {
+                Console.WriteLine("Shutdown aborted (likely took too long)");
+            }
         }
 
-        private async Task SimulateAsync(string connectionString)
+        private async Task SimulateAsync(DeviceInstance instance)
         {
-            var deviceClient = DeviceClient.CreateFromConnectionString(connectionString);
-            deviceClient.OperationTimeoutInMilliseconds = 2000;
-            await deviceClient.SetDesiredPropertyUpdateCallbackAsync(DesiredPropertyUpdatedAsync, null);
-            var client = connectionString.Split(";")[1].Split('=')[1];
-
-            void WriteLine(string message)
-                => Console.WriteLine($"{client}: {message}");
-
-            const int seconds = 10;
-            WriteLine($"Client set up to send temperature data every {seconds} seconds");
-
-            var twin = await deviceClient.GetTwinAsync();
-            int? overheatThreshold = null;
-            if (twin.Properties.Desired.Contains("overheatThreshold"))
+            try
             {
-                overheatThreshold = twin.Properties.Desired["overheatThreshold"];
-            }
-            var rng = new Random();
-            var sensorBaseTemp = rng.Next(0, 50);
-            while (_sendData)
-            {
-                try
+                var deviceClient = instance.DeviceClient;
+
+                // listen for cloud to device methods and desired property updates
+                await deviceClient.SetMethodDefaultHandlerAsync(OnUnknownMethodAsync, instance);
+                await deviceClient.SetMethodHandlerAsync("UpdateFirmwareNow", OnUpdateAvailableAsync, instance);
+                await deviceClient.SetDesiredPropertyUpdateCallbackAsync(DesiredPropertyUpdatedAsync, instance);
+
+                const int seconds = 10;
+                instance.Log($"Client set up to send temperature data every {seconds} seconds");
+
+                var twin = await deviceClient.GetTwinAsync();
+                var rng = new Random();
+                var sensorBaseTemp = rng.Next(0, 50);
+                while (_sendData)
                 {
-                    var data = new
+                    try
                     {
-                        temperature = sensorBaseTemp + rng.Next(0, 50)
-                    };
-                    var json = JsonSerializer.Serialize(data);
-                    var message = new Message(Encoding.UTF8.GetBytes(json));
-                    var overheated = overheatThreshold.HasValue && data.temperature > overheatThreshold;
-                    message.Properties.Add("overheated", overheated.ToString());
-                    await deviceClient.SendEventAsync(message);
-                    WriteLine($"Sent: temperature={data.temperature}" + (overheated ? ";overheated=true" : ""));
+                        var data = new
+                        {
+                            temperature = sensorBaseTemp + rng.Next(0, 50)
+                        };
+                        var json = JsonSerializer.Serialize(data);
+                        var message = new Message(Encoding.UTF8.GetBytes(json));
+                        var overheatThreshold = instance.OverheatThreshold;
+                        var overheated = overheatThreshold.HasValue && data.temperature > overheatThreshold;
+                        message.Properties.Add("overheated", overheated.ToString());
+                        await deviceClient.SendEventAsync(message);
+                        instance.Log($"Sent: temperature={data.temperature}" + (overheated ? ";overheated=true" : ""));
+                    }
+                    catch (Exception e)
+                    {
+                        instance.Log($"Failure: {e.Message}");
+                    }
+                    await Task.Delay(seconds * 1000);
                 }
-                catch (Exception e)
-                {
-                    WriteLine($"Failure: {e.Message}");
-                }
-                await Task.Delay(seconds * 1000);
+            }
+            catch (Exception e)
+            {
+                instance.Log($"Fatal startup error: {e.Message}");
+            }
+            finally
+            {
+                instance.Log("Shutting down client..");
+                await instance.DeviceClient.CloseAsync();
             }
         }
 
-        private Task DesiredPropertyUpdatedAsync(TwinCollection desiredProperties, object userContext)
+        private Task<MethodResponse> OnUnknownMethodAsync(MethodRequest methodRequest, object userContext)
         {
-            throw new NotImplementedException();
+            var di = (DeviceInstance)userContext;
+            di.Log($"Unknown cloud to device call. Method {methodRequest.Name} is not defined on client. Don't know what to do with payload {methodRequest.DataAsJson}");
+            return Task.FromResult(new MethodResponse(404));
+        }
+
+        private async Task<MethodResponse> OnUpdateAvailableAsync(MethodRequest methodRequest, object userContext)
+        {
+            var di = (DeviceInstance)userContext;
+            var data = methodRequest.DataAsJson;
+            di.Log($"Updating firware to desired version: {data}");
+            await Task.Delay(3_000);
+            di.Log("Firware update successful!");
+            return new MethodResponse(200);
+        }
+
+        private async Task DesiredPropertyUpdatedAsync(TwinCollection desiredProperties, object userContext)
+        {
+            var di = (DeviceInstance)userContext;
+            if (desiredProperties.Contains("overheatThreshold"))
+            {
+                var value = desiredProperties["overheatThreshold"];
+                int threshold = -1;
+                if (value != null &&
+                    !int.TryParse(value?.ToString(), out threshold))
+                {
+                    return;
+                }
+                var desiredThreshold = value != null ? threshold : (int?)null;
+                // devices end in double digit name, abuse to fake limit of certain devices
+                if (int.TryParse(di.Name.Substring(di.Name.Length - 2), out int id) &&
+                    id > 15)
+                {
+                    // pretend a threshold limit exists for certain devices
+                    const int limit = 50;
+                    if (desiredThreshold.HasValue && desiredThreshold > limit)
+                    {
+                        di.Log($"Error: Maximum threshold of {limit} exceeded");
+                        return;
+                    }
+                }
+
+                di.Log($"Updating threshold to {desiredThreshold}");
+                di.OverheatThreshold = desiredThreshold;
+                await di.DeviceClient.UpdateReportedPropertiesAsync(new TwinCollection(JsonSerializer.Serialize(new
+                {
+                    overheatThreshold = desiredThreshold
+                })));
+            }
         }
     }
 }

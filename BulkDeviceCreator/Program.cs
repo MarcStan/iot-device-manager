@@ -3,11 +3,11 @@ using Microsoft.Azure.Devices.Shared;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -37,7 +37,7 @@ namespace BulkDeviceCreator
 
             var registryManager = RegistryManager.CreateFromConnectionString(connectionString);
 
-            Console.WriteLine("Beginning bulk upload..");
+            Console.WriteLine($"Beginning bulk device create..");
             await BulkCreateAsync(registryManager, CancellationToken.None);
             Console.WriteLine("Bulk upload done! Press enter to exit..");
 #if !DEBUG
@@ -61,6 +61,9 @@ namespace BulkDeviceCreator
                 .Where(x => x != null)
                 .ToArray();
 
+            if (existingDevices.Length > 0)
+                Console.WriteLine($"{existingDevices.Length} devices already exist.");
+
             // only insert devices that don't exist yet
             var devicesToUpload = devices
                 .Where(device => existingDevices.All(existing => existing.DeviceId != device.Id))
@@ -76,7 +79,7 @@ namespace BulkDeviceCreator
 
                 if (!result.IsSuccessful)
                     throw new AggregateException("Device creation failed!",
-                        result.Errors.Select(e => new Exception(JsonConvert.SerializeObject(new
+                        result.Errors.Select(e => new Exception(JsonSerializer.Serialize(new
                         {
                             deviceId = e.DeviceId,
                             code = e.ErrorCode,
@@ -99,7 +102,7 @@ namespace BulkDeviceCreator
             var twins = devices
                 .Select(d => new Twin(d.Id)
                 {
-                    Tags = new TwinCollection(JsonConvert.SerializeObject(new
+                    Tags = new TwinCollection(JsonSerializer.Serialize(new
                     {
                         country = d.Country,
                         building = d.Building,

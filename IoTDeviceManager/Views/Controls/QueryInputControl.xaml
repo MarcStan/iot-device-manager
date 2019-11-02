@@ -23,7 +23,7 @@
                     IoT Hub query language syntax
                 </Hyperlink>
         </Label>
-        <Label Grid.Row="1" Grid.Column="0" Content="SELECT * FROM devices" />
+        <Label Grid.Row="1" Grid.Column="0" Content="{Binding QueryPrefix}" />
         <TextBox Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2"
                      Padding="0,0,10,0"
                      Text="{Binding DeviceQuery, UpdateSourceTrigger=PropertyChanged, Delay=500}"

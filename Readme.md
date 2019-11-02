@@ -88,10 +88,24 @@ The client should now receive those update messages for the selected 5 devices a
 
 ## Update desired properties for many devices (device twin)
 
-> Usecase: Configuration should be easy. With IoT hubs device twin model it is possible to set a desired state in the cloud and devices will reflect the changes as soon as they are connected.
+> Usecase: Configuration should be easy. With IoT hubs device twin model it is possible to set a desired state in the cloud and devices will reflect the changes as soon as they are connected and the value is allowed.
 
 In the IoT device manager enter a query like `WHERE NOT is_defined(properties.reported.overheatThreshold)` (it should filter to all devices as no device has an overheat threshold set by default).
 
-Then configure a value and press set threshold.
+Then configure a value greater than 50 in the Bulk update tab (the default 60 will do) and press set threshold.
 
-All affected devices should acknowledge and future sensor values will contain a property `overheated` when the sensor value is too high.
+All devices should respond in the `IoTClient.Cli` output but devices 16-20 will deny the request with error `Maximum threshold of 50 exceeded`.
+
+For the devices that acknowledged future sensor values will contain a property `overheated` when the sensor value is too high while the remaining devices will see no change in behaviour.
+
+Now run the query `WHERE properties.desired.overheatThreshold = 60` and observe that all 20 devices are returned.
+
+That is: for all devices we set the desired value to 60 (doesn't necessarily mean they accept it).
+
+if you run `WHERE properties.reported.overheatThreshold = 60` instead you will see only the first 15 devices (who accepted the value).
+
+Now run the query `WHERE NOT is_defined(properties.reported.overheatThreshold)` again and it will display only devices 16-20 as the property was set on all other devices.
+
+Since these devices all reported that their maximum allowed threshold is 50 let's set the value to 50 and apply it.
+
+If you run the query `WHERE NOT is_defined(properties.reported.overheatThreshold)` one more time you will see no more devices as they now all have thresholds (some 50, some 60).
