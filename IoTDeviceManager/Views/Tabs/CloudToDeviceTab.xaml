@@ -15,12 +15,12 @@
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
-                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
             </Grid.RowDefinitions>
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="Auto" />
-                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
             <TextBlock
                 Text="Supported device methods are: UpdateFirmwareNow, UploadLog"
@@ -38,6 +38,8 @@
                 Content="Execute method"
                 Command="{Binding ExecuteCommand}"
                 IsEnabled="{Binding CanExecute}"
+                Width="200"
+                HorizontalAlignment="Left"
                 Margin="2,5" />
             <Label Grid.Row="2"
                 Content="Body (optional):"
@@ -48,8 +50,8 @@
                 Grid.ColumnSpan="2"
                 AcceptsReturn="True"
                 AcceptsTab="True"
-                HorizontalScrollBarVisibility="Visible"
-                VerticalScrollBarVisibility="Visible"
+                HorizontalScrollBarVisibility="Auto"
+                VerticalScrollBarVisibility="Auto"
                 Text="{Binding MethodBody, UpdateSourceTrigger=PropertyChanged}"
                 IsEnabled="{Binding IsJobRunning, Converter={StaticResource InvertBooleanConverter}}"
                 Margin="2,5"
