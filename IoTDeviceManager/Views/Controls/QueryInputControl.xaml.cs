@@ -1,6 +1,6 @@
 ﻿using System.Diagnostics;
 
-namespace IoTDeviceManager.Controls
+namespace IoTDeviceManager.Views.Controls
 {
     public partial class QueryInputControl
     {

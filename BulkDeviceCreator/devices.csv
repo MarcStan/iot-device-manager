@@ -1,5 +1,5 @@
 ﻿deviceId,enabled,country,building,floor,sensorType
-DemoDevice01,,US,Building 7,Floor 1,Temperature Sensor
+DemoDevice01,true,US,Building 7,Floor 1,Temperature Sensor
 DemoDevice02,true,US,Building 7,Floor 2,Temperature Sensor
 DemoDevice03,true,US,Building 7,Floor 3,Temperature Sensor
 DemoDevice04,true,US,Building 7,Floor 4,Temperature Sensor

@@ -89,7 +89,8 @@ namespace IoTDeviceManager.ViewModels.Controls
                 {
                     return new DeviceModel
                     {
-                        DeviceName = t.DeviceId
+                        DeviceName = t.DeviceId,
+                        ETag = t.ETag
                     };
                 }).ToList());
             }

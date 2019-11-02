@@ -7,5 +7,37 @@
     mc:Ignorable="d" 
     d:DesignHeight="450" d:DesignWidth="800">
     <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <Label Content="Set overheat threshold:" VerticalAlignment="Center" />
+            <TextBox
+                Grid.Column="1"
+                Text="{Binding OverheatThreshold, UpdateSourceTrigger=PropertyChanged}"
+                Margin="2,5"
+                Width="200" />
+            <Button Grid.Column="2"
+                Content="Set threshold"
+                Command="{Binding OverheatThresholdCommand}"
+                Margin="2,5" />
+        </Grid>
+        <TextBox
+            IsReadOnly="True"
+            Grid.Row="1"
+            Text="{Binding ErrorMessage}"
+            TextWrapping="Wrap"
+            Foreground="DarkRed"
+            Style="{StaticResource BorderlessTextBoxStyle}" />
     </Grid>
 </UserControl>

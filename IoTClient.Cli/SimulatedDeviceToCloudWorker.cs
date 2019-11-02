@@ -23,6 +23,7 @@ namespace IoTClient.Cli
                 throw new ArgumentException($"Missing required connectionstring @{key}");
 
             _deviceClient = DeviceClient.CreateFromConnectionString(connectionString);
+            _deviceClient.OperationTimeoutInMilliseconds = 2000;
         }
 
         public Task StartAsync(CancellationToken cancellationToken)
@@ -42,6 +43,12 @@ namespace IoTClient.Cli
 
         private async Task SimulateAsync()
         {
+            var twin = await _deviceClient.GetTwinAsync();
+            int overheated = 60;
+            if (twin.Properties.Desired.Contains("overheatThreshold"))
+            {
+                overheated = twin.Properties.Desired["overheatThreshold"];
+            }
             var rng = new Random();
             const int min = 0;
             while (_sendData)
@@ -54,7 +61,7 @@ namespace IoTClient.Cli
                     };
                     var json = JsonSerializer.Serialize(data);
                     var message = new Message(Encoding.UTF8.GetBytes(json));
-                    message.Properties.Add("overheated", (data.temperature > 60).ToString());
+                    message.Properties.Add("overheated", (data.temperature > overheated).ToString());
                     await _deviceClient.SendEventAsync(message);
                     Console.WriteLine($"Sent: temperature={data.temperature}");
                 }

@@ -49,6 +49,7 @@
             Grid.Row="1"
             Text="{Binding JobStatus}"
             TextWrapping="Wrap"
+            Foreground="DarkRed"
             Style="{StaticResource BorderlessTextBoxStyle}" />
     </Grid>
 </UserControl>
