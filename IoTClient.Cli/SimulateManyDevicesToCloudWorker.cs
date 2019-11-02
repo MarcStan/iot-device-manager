@@ -4,6 +4,8 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Net;
 using System.Text;
 using System.Text.Json;
 using System.Threading;
@@ -23,7 +25,7 @@ namespace IoTClient.Cli
             _connectionStrings = new ConnectionStrings();
             configuration.GetSection("ConnectionStrings").Bind(_connectionStrings);
             if (_connectionStrings.DeviceConnections.Length == 0)
-                throw new ArgumentException($"Missing required device connectionstrings!");
+                throw new ArgumentException("Missing required device connectionstrings!");
         }
 
         public Task StartAsync(CancellationToken cancellationToken)
@@ -63,6 +65,7 @@ namespace IoTClient.Cli
                 // listen for cloud to device methods and desired property updates
                 await deviceClient.SetMethodDefaultHandlerAsync(OnUnknownMethodAsync, instance);
                 await deviceClient.SetMethodHandlerAsync("UpdateFirmwareNow", OnUpdateAvailableAsync, instance);
+                await deviceClient.SetMethodHandlerAsync("UploadLog", OnUploadLogAsync, instance);
                 await deviceClient.SetDesiredPropertyUpdateCallbackAsync(DesiredPropertyUpdatedAsync, instance);
 
                 const int seconds = 10;
@@ -108,15 +111,35 @@ namespace IoTClient.Cli
         private Task<MethodResponse> OnUnknownMethodAsync(MethodRequest methodRequest, object userContext)
         {
             var di = (DeviceInstance)userContext;
-            di.Log($"Unknown cloud to device call. Method {methodRequest.Name} is not defined on client. Don't know what to do with payload {methodRequest.DataAsJson}");
+            di.Log($"Unknown cloud to device call. Method '{methodRequest.Name}' is not defined on client. Don't know what to do with payload {methodRequest.DataAsJson}");
             return Task.FromResult(new MethodResponse(404));
+        }
+
+        private async Task<MethodResponse> OnUploadLogAsync(MethodRequest methodRequest, object userContext)
+        {
+            var di = (DeviceInstance)userContext;
+            if (int.TryParse(di.Name.Substring(di.Name.Length - 2), out int id) &&
+                id % 2 == 0)
+            {
+                di.Log("Uploading log to cloud..");
+                var logBytes = Encoding.UTF8.GetBytes($"This is fake data for device {di.Name}. In the realworld this could have been logs from last 24h of runtime.");
+                using var logData = new MemoryStream(logBytes);
+                logData.Position = 0;
+                await di.DeviceClient.UploadToBlobAsync($"devicelog.{Guid.NewGuid()}.log", logData);
+
+                di.Log("Upload done!");
+                return new MethodResponse(200);
+            }
+
+            di.Log("No log available to be uploaded!");
+            return new MethodResponse((int)HttpStatusCode.NoContent);
         }
 
         private async Task<MethodResponse> OnUpdateAvailableAsync(MethodRequest methodRequest, object userContext)
         {
             var di = (DeviceInstance)userContext;
             var data = methodRequest.DataAsJson;
-            di.Log($"Updating firware to desired version: {data}");
+            di.Log($"Updating firware. Payload was: {data}");
             await Task.Delay(3_000);
             di.Log("Firware update successful!");
             return new MethodResponse(200);

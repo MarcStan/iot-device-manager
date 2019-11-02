@@ -7,52 +7,35 @@ namespace IoTDeviceManager.ViewModels
 {
     public class MainWindowViewModel : ViewModelBase
     {
-        private FilteredDeviceListViewModel _filteredDeviceListViewModel;
-        private QueryInputViewModel _queryInputViewModel;
-        private BulkUpdateViewModel _bulkUpdateViewModel;
-        private ScheduleJobsViewModel _scheduleJobsViewModel;
         private string? _error;
 
         public MainWindowViewModel(
             QueryInputViewModel queryInputViewModel,
             FilteredDeviceListViewModel filteredDeviceListViewModel,
             BulkUpdateViewModel bulkUpdateViewModel,
-            ScheduleJobsViewModel scheduleJobsViewModel)
+            ScheduleJobsViewModel scheduleJobsViewModel,
+            CloudToDeviceViewModel cloudToDeviceViewModel)
         {
-            _queryInputViewModel = queryInputViewModel;
-            _filteredDeviceListViewModel = filteredDeviceListViewModel;
-            _bulkUpdateViewModel = bulkUpdateViewModel;
-            _scheduleJobsViewModel = scheduleJobsViewModel;
-
+            QueryInputViewModel = queryInputViewModel;
+            FilteredDeviceListViewModel = filteredDeviceListViewModel;
+            BulkUpdateViewModel = bulkUpdateViewModel;
+            ScheduleJobsViewModel = scheduleJobsViewModel;
+            CloudToDeviceViewModel = cloudToDeviceViewModel;
             queryInputViewModel.QueryResultUpdated += OnQueryUpdated;
             // initial query
             queryInputViewModel.ExecuteDeviceQueryCommand.Execute(null);
             queryInputViewModel.QueryError += OnQueryError;
         }
 
-        public QueryInputViewModel QueryInputViewModel
-        {
-            get => _queryInputViewModel;
-            set { SetProperty(ref _queryInputViewModel, value); }
-        }
+        public QueryInputViewModel QueryInputViewModel { get; }
 
-        public FilteredDeviceListViewModel FilteredDeviceListViewModel
-        {
-            get => _filteredDeviceListViewModel;
-            set { SetProperty(ref _filteredDeviceListViewModel, value); }
-        }
+        public FilteredDeviceListViewModel FilteredDeviceListViewModel { get; }
 
-        public BulkUpdateViewModel BulkUpdateViewModel
-        {
-            get => _bulkUpdateViewModel;
-            set { SetProperty(ref _bulkUpdateViewModel, value); }
-        }
+        public BulkUpdateViewModel BulkUpdateViewModel { get; }
 
-        public ScheduleJobsViewModel ScheduleJobsViewModel
-        {
-            get => _scheduleJobsViewModel;
-            set { SetProperty(ref _scheduleJobsViewModel, value); }
-        }
+        public ScheduleJobsViewModel ScheduleJobsViewModel { get; }
+
+        public CloudToDeviceViewModel CloudToDeviceViewModel { get; }
 
         public string? Error
         {

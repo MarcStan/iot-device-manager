@@ -109,3 +109,15 @@ Now run the query `WHERE NOT is_defined(properties.reported.overheatThreshold)` 
 Since these devices all reported that their maximum allowed threshold is 50 let's set the value to 50 and apply it.
 
 If you run the query `WHERE NOT is_defined(properties.reported.overheatThreshold)` one more time you will see no more devices as they now all have thresholds (some 50, some 60).
+
+## Call a specific method on a selected number of devices
+
+> Calling a method can be done for a single device and for multiple. Infact the update example already did just that! This example allows to to select the specific method and payload to send.
+
+Before this sample works you need to create a storage account and link a container from it to the IoT hub via the `File upload` section. Uploaded files will then automatically end up in a folder with the device name inside the container.
+
+Switch to the cloud to device methods tab and enter `UploadLog`, run a query such as: `WHERE tags.country = 'US'` and press execute.
+
+Observe that the devices will respond (only devices with an even number "support" logging, all other devices will issue a warning).
+
+If you have attached a storage account (and container) it will contain folders for every device (with an even number) and in each folder will be a dummy log file.

@@ -8,7 +8,7 @@
         xmlns:controls="clr-namespace:IoTDeviceManager.Views.Controls"
     xmlns:tabs="clr-namespace:IoTDeviceManager.Views.Tabs"
     mc:Ignorable="d"
-        Title="IoT Device Manager" Height="450" Width="800">
+        Title="IoT Device Manager" Height="450" Width="800" MinWidth="800" MinHeight="450">
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
@@ -33,6 +33,9 @@
             </TabItem>
             <TabItem Header="Schedule jobs">
                 <tabs:ScheduleJobsTab DataContext="{Binding ScheduleJobsViewModel}" />
+            </TabItem>
+            <TabItem Header="Cloud to device methods">
+                <tabs:CloudToDeviceTab DataContext="{Binding CloudToDeviceViewModel}" />
             </TabItem>
         </TabControl>
         <Grid Grid.Row="2" Grid.ColumnSpan="3" Background="LightGray" Visibility="{Binding HasError, Converter={StaticResource BooleanToVisibilityConverter}}">
