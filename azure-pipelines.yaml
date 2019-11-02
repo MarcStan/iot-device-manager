@@ -35,37 +35,37 @@ steps:
     arguments: '-c $(BuildConfiguration)'
 
 - task: DotNetCoreCLI@2
-  displayName: 'dotnet publish $(PublishProject)'
+  displayName: 'dotnet publish'
   inputs:
     command: 'publish'
     publishWebProjects: false
     projects: 'BulkDeviceCreator/BulkDeviceCreator.csproj'
     arguments: '--no-build -c $(BuildConfiguration) -o $(build.artifactstagingdirectory)'
     zipAfterPublish: false
-    modifyOutputPath: false
+    modifyOutputPath: true
 
 - task: DotNetCoreCLI@2
-  displayName: 'dotnet publish $(PublishProject)'
+  displayName: 'dotnet publish'
   inputs:
     command: 'publish'
     publishWebProjects: false
     projects: 'IoTClient.Cli/IoTClient.Cli.csproj'
     arguments: '--no-build -c $(BuildConfiguration) -o $(build.artifactstagingdirectory)'
     zipAfterPublish: false
-    modifyOutputPath: false
+    modifyOutputPath: true
 
 - task: DotNetCoreCLI@2
-  displayName: 'dotnet publish $(PublishProject)'
+  displayName: 'dotnet publish'
   inputs:
     command: 'publish'
     publishWebProjects: false
     projects: 'IoTDeviceManager/IoTDeviceManager.csproj'
     arguments: '--no-build -c $(BuildConfiguration) -o $(build.artifactstagingdirectory)'
     zipAfterPublish: false
-    modifyOutputPath: false
+    modifyOutputPath: true
 
 - task: PublishPipelineArtifact@1
   displayName: 'Publish Artifact'
   inputs:
-    ArtifactName: '$(PublishProject)'
+    ArtifactName: 'IoTDeviceManager'
     targetPath: '$(build.artifactstagingdirectory)'
