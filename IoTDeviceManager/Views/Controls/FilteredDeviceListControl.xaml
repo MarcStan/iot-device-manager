@@ -13,6 +13,11 @@
         </Grid.RowDefinitions>
         <Label Content="{Binding DeviceFilterHeader}" />
         <ListView Grid.Row="1" ItemsSource="{Binding Devices}">
+            <ListView.ItemContainerStyle>
+                <Style TargetType="ListViewItem">
+                    <Setter Property="Focusable" Value="false"/>
+                </Style>
+            </ListView.ItemContainerStyle>
             <ListView.ItemTemplate>
                 <DataTemplate>
                     <Label Content="{Binding DeviceName}" />
