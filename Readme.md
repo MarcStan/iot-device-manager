@@ -53,20 +53,10 @@ $hubName = "{YourIoTHubName}"
 ```
 Then run this command to get all connectionstrings (it will take a few minutes):
 ``` powershell
-$count = 20; if (!$hubName) { throw "Must set `$hubName first!";} $connectionStrings = @(); 1..$count | foreach { Write-Host "Getting connectionstring for device $_/$count"; $connectionStrings += ((az iot hub device-identity show-connection-string --hub-name homeapp --device-id ("DemoDevice{0:d2}" -f $_) --output json) | ConvertFrom-Json).connectionString }; Write-Output $connectionStrings
+$count = 20; if (!$hubName) { throw "Must set `$hubName first!";} $connectionStrings = @(); 1..$count | foreach { Write-Host "Getting connectionstring for device $_/$count"; $connectionStrings += ((az iot hub device-identity show-connection-string --hub-name $hubName --device-id ("DemoDevice{0:d2}" -f $_) --output json) | ConvertFrom-Json).connectionString }; $connectionStrings | foreach { Write-Output "`"$_`"," }
 ```
 
-You can paste the output into the appsettings.json **inside Visual Studio** (Visual Studio will automatically format it to have correct json encoding).
-
-``` json
-{
-    "ConnectionStrings": {
-        "DeviceConnections": [
-            // paste connectionstrings here
-        ]
-    }
-}
-```
+You can paste the output into the DeviceConnections array in appsettings.json of IoTDevice.Cli
 
 # Running it
 
