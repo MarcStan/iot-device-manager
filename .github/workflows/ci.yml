@@ -11,13 +11,13 @@ jobs:
       with:
         dotnet-version: 3.1.100
     - name: build
-      run: dotnet build -c $(Configuration)
+      run: dotnet build -c ${{ env.Configuration }}
     - name: publish
-      run: dotnet publish -c $(Configuration) --no-build BulkDeviceCreator/BulkDeviceCreator.csproj -o output/BulkDeviceCreator
+      run: dotnet publish -c ${{ env.Configuration }} --no-build BulkDeviceCreator/BulkDeviceCreator.csproj -o output/BulkDeviceCreator
     - name: publish
-      run: dotnet publish -c $(Configuration) --no-build IoTClient.Cli/IoTClient.Cli.csproj -o output/IoTClient.Cli
+      run: dotnet publish -c ${{ env.Configuration }} --no-build IoTClient.Cli/IoTClient.Cli.csproj -o output/IoTClient.Cli
     - name: publish
-      run: dotnet publish -c $(Configuration) --no-build IoTDeviceManager/IoTDeviceManager.csproj -o output/IoTDeviceManager
+      run: dotnet publish -c ${{ env.Configuration }} --no-build IoTDeviceManager/IoTDeviceManager.csproj -o output/IoTDeviceManager
     - uses: actions/upload-artifact@v1
       with:
         name: IoTDeviceManager
