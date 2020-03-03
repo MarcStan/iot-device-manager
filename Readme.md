@@ -2,8 +2,6 @@
 
 This is a **demonstration UI** for multi-device management when using [IoT Hub](https://azure.microsoft.com/services/iot-hub/). As such it only supports limited scenarios.
 
-[![IoTDeviceManager](https://dev.azure.com/marcstanlive/Opensource/_apis/build/status/46)](https://dev.azure.com/marcstanlive/Opensource/_build/definition?definitionId=46)
-
 ![IoT device manager](./screenshots/iotexplorer.png)
 
 If you need more features, consider using [Azure IoT Explorer](https://github.com/Azure/azure-iot-explorer) (or the deprecated [DeviceExplorer](https://github.com/Azure/azure-iot-sdk-csharp/tree/master/tools/DeviceExplorer)).
