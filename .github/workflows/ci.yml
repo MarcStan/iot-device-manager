@@ -4,8 +4,8 @@ jobs:
   build:
     runs-on: windows-latest
     steps:
-    - uses: actions/checkout@v2
-    - uses: actions/setup-dotnet@v1
+    - uses: actions/checkout@01aecccf739ca6ff86c0539fbc67a7a5007bbc81 # pin@v2 
+    - uses: actions/setup-dotnet@b7821147f564527086410e8edd122d89b4b9602f # pin@v1 
       with:
         dotnet-version: 3.1.100
     - name: build
@@ -16,7 +16,7 @@ jobs:
       run: dotnet publish -c Release --no-build IoTClient.Cli/IoTClient.Cli.csproj -o output/IoTClient.Cli
     - name: publish
       run: dotnet publish -c Release --no-build IoTDeviceManager/IoTDeviceManager.csproj -o output/IoTDeviceManager
-    - uses: actions/upload-artifact@v1
+    - uses: actions/upload-artifact@3446296876d12d4e3a0f3145a3c87e67bf0a16b5 # pin@v1 
       with:
         name: IoTDeviceManager
         path: output
