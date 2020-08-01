@@ -1,7 +1,9 @@
 ﻿using Microsoft.Azure.Devices.Client;
+using Microsoft.Azure.Devices.Client.Transport;
 using Microsoft.Azure.Devices.Shared;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
+using Microsoft.WindowsAzure.Storage.Blob;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -125,7 +127,20 @@ namespace IoTClient.Cli
                 var logBytes = Encoding.UTF8.GetBytes($"This is fake data for device {di.Name}. In the realworld this could have been logs from last 24h of runtime.");
                 using var logData = new MemoryStream(logBytes);
                 logData.Position = 0;
-                await di.DeviceClient.UploadToBlobAsync($"devicelog.{Guid.NewGuid()}.log", logData);
+                var uri = await di.DeviceClient.GetFileUploadSasUriAsync(new FileUploadSasUriRequest
+                {
+                    BlobName = $"devicelog.{Guid.NewGuid()}.log"
+                });
+
+                var blob = new CloudBlockBlob(uri.GetBlobUri());
+                await blob.UploadFromStreamAsync(logData);
+                var notification = new FileUploadCompletionNotification
+                {
+                    CorrelationId = uri.CorrelationId,
+                    IsSuccess = true,
+                    StatusCode = 200
+                };
+                await di.DeviceClient.CompleteFileUploadAsync(notification);
 
                 di.Log("Upload done!");
                 return new MethodResponse(200);
